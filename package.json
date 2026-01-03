@@ -1,8 +1,8 @@
 {
-  "name": "graph",
+  "name": "simplemachine",
   "version": "0.0.22",
   "description": "A parser combinator library for TypeScript, inspired by Parsec.",
-  "homepage": "https://github.com/egonSchiele/graph",
+  "homepage": "https://github.com/egonSchiele/simplemachine",
   "scripts": {
     "test": "vitest",
     "test:tsc": "tsc -p tests/tsconfig.json",
