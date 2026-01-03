@@ -96,6 +96,7 @@ export class StatelogClient {
   ): void {
     this.post({
       type: "followEdge",
+      edgeId: `${fromNodeId}->${toNodeId}`,
       fromNodeId,
       toNodeId,
       isConditionalEdge,
