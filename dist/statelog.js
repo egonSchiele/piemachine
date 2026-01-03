@@ -1,37 +1,41 @@
 import { nanoid } from "nanoid";
-import config from "./config.js";
 export class StatelogClient {
-    constructor(host) {
-        this.host = process.env.STATELOG_HOST;
+    constructor(host, debug = false) {
+        this.host = host;
+        this.debug = debug;
         this.tid = nanoid();
-        if (host) {
+        if (this.debug)
             console.log(`Statelog client initialized with host: ${host} and TID: ${this.tid}`);
-        }
     }
-    log(data) {
-        if (this.host) {
-            const fullUrl = new URL("/api/logs", this.host);
-            const url = fullUrl.toString();
-            fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    tid: this.tid,
-                    data,
-                    timestamp: new Date().toISOString()
-                })
-            }).catch((err) => {
+    logDebug(message, data) {
+        this.post({
+            type: "debug",
+            message: message,
+            data,
+        });
+    }
+    logGraph({ nodes, edges, startNode, }) {
+        this.post({
+            type: "graph",
+            data: {
+                nodes,
+                edges,
+                startNode,
+            },
+        });
+    }
+    post(body) {
+        const fullUrl = new URL("/api/logs", this.host);
+        const url = fullUrl.toString();
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(Object.assign(Object.assign({ tid: this.tid }, body), { timeStamp: new Date().toISOString() })),
+        }).catch((err) => {
+            if (this.debug)
                 console.error("Failed to send statelog:", err);
-            });
-        }
+        });
     }
-}
-let statelogClient;
-export function getStatelogClient() {
-    if (!statelogClient) {
-        statelogClient = new StatelogClient(config.statelogHost);
-    }
-    return statelogClient;
 }

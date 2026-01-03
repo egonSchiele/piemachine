@@ -9,14 +9,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { color } from "termcolors";
 import { GraphError } from "./error.js";
+import { StatelogClient } from "./statelog.js";
 import { conditionalEdge, edgeToJSON, isRegularEdge, regularEdge, } from "./types.js";
-import { getStatelogClient } from "./statelog.js";
 export class Graph {
     constructor(nodes, config = {}) {
+        var _a, _b;
         this.nodes = {};
         this.edges = {};
+        this.statelogClient = null;
         this.config = config;
-        this.statelogClient = getStatelogClient();
+        if (config.statelogHost) {
+            this.statelogClient = new StatelogClient(config.statelogHost, (_b = (_a = config.debug) === null || _a === void 0 ? void 0 : _a.log) !== null && _b !== void 0 ? _b : false);
+        }
     }
     node(id, func) {
         this.nodes[id] = func;
@@ -36,36 +40,29 @@ export class Graph {
         }
         this.edges[from].push(conditionalEdge(to, adjacentNodes));
     }
-    debug(str, data) {
-        var _a, _b;
-        let debugStr = `${color.magenta("[DEBUG]")}: ${str}`;
+    debug(message, data) {
+        var _a, _b, _c;
+        let debugStr = `${color.magenta("[DEBUG]")}: ${message}`;
         if (((_a = this.config.debug) === null || _a === void 0 ? void 0 : _a.logData) && data !== undefined) {
             debugStr += ` | Data: ${color.green(JSON.stringify(data))}`;
         }
         if ((_b = this.config.debug) === null || _b === void 0 ? void 0 : _b.log) {
             console.log(debugStr);
         }
-        this.statelogClient.log({
-            type: "debug",
-            message: str,
-            data: data,
-            timestamp: new Date().toISOString(),
-        });
+        (_c = this.statelogClient) === null || _c === void 0 ? void 0 : _c.logDebug(message, data || {});
     }
     run(startId, input) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
+            var _a, _b, _c;
             const jsonEdges = {};
             for (const from in this.edges) {
                 jsonEdges[from] =
                     this.edges[from].map(edgeToJSON);
             }
-            this.statelogClient.log({
-                type: "graph",
+            (_a = this.statelogClient) === null || _a === void 0 ? void 0 : _a.logGraph({
                 nodes: Object.keys(this.nodes),
                 edges: jsonEdges,
                 startNode: startId,
-                timestamp: new Date().toISOString(),
             });
             const stack = [startId];
             let data = input;
@@ -75,14 +72,14 @@ export class Graph {
                 if (!nodeFunc) {
                     throw new GraphError(`Node function for ${currentId} not found.`);
                 }
-                if ((_a = this.config.hooks) === null || _a === void 0 ? void 0 : _a.beforeNode) {
+                if ((_b = this.config.hooks) === null || _b === void 0 ? void 0 : _b.beforeNode) {
                     this.debug(`Before hook for node: ${color.green(currentId)}`, data);
                     data = yield this.config.hooks.beforeNode(currentId, data);
                 }
                 this.debug(`Executing node: ${color.green(currentId)}`, data);
                 data = yield this.runAndValidate(nodeFunc, currentId, data);
                 this.debug(`Completed node: ${color.green(currentId)}`, data);
-                if ((_b = this.config.hooks) === null || _b === void 0 ? void 0 : _b.afterNode) {
+                if ((_c = this.config.hooks) === null || _c === void 0 ? void 0 : _c.afterNode) {
                     this.debug(`After hook for node: ${color.green(currentId)}`, data);
                     data = yield this.config.hooks.afterNode(currentId, data);
                 }
