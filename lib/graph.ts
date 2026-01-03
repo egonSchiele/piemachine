@@ -61,7 +61,7 @@ export class Graph<T, N extends string> {
     if (this.config.debug?.log) {
       console.log(debugStr);
     }
-    this.statelogClient?.logDebug(message, data || {});
+    //this.statelogClient?.debug(message, data || {});
   }
 
   async run(startId: N, input: T): Promise<T> {
@@ -70,7 +70,7 @@ export class Graph<T, N extends string> {
       jsonEdges[from] =
         this.edges[from as keyof typeof this.edges]!.map(edgeToJSON);
     }
-    this.statelogClient?.logGraph({
+    this.statelogClient?.graph({
       nodes: Object.keys(this.nodes),
       edges: jsonEdges,
       startNode: startId,
@@ -87,25 +87,32 @@ export class Graph<T, N extends string> {
 
       if (this.config.hooks?.beforeNode) {
         this.debug(`Before hook for node: ${color.green(currentId)}`, data);
+        const startData = data;
         data = await this.config.hooks!.beforeNode!(currentId, data);
+        this.statelogClient?.beforeHook(currentId, startData, data);
       }
       this.debug(`Executing node: ${color.green(currentId)}`, data);
+      this.statelogClient?.enterNode(currentId, data);
       data = await this.runAndValidate(nodeFunc, currentId, data);
+      this.statelogClient?.exitNode(currentId, data);
       this.debug(`Completed node: ${color.green(currentId)}`, data);
 
       if (this.config.hooks?.afterNode) {
         this.debug(`After hook for node: ${color.green(currentId)}`, data);
-
+        const startData = data;
         data = await this.config.hooks!.afterNode!(currentId, data);
+        this.statelogClient?.afterHook(currentId, startData, data);
       }
 
       const edges = this.edges[currentId] || [];
       for (const edge of edges) {
         if (isRegularEdge(edge)) {
           stack.push(edge.to);
+          this.statelogClient?.followEdge(currentId, edge.to, false, data);
           this.debug(`Following regular edge to: ${color.green(edge.to)}`);
         } else {
           const nextId = await edge.condition(data);
+          this.statelogClient?.followEdge(currentId, nextId, true, data);
           this.debug(
             `Following conditional edge to: ${color.green(nextId)}`,
             data

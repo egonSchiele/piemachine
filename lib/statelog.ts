@@ -3,20 +3,20 @@ import { JSONEdge } from "./types.js";
 
 export class StatelogClient {
   private host: string;
-  private debug: boolean;
+  private debugMode: boolean;
   private tid: string;
 
   constructor(host: string, debug: boolean = false) {
     this.host = host;
-    this.debug = debug;
+    this.debugMode = debug;
     this.tid = nanoid();
-    if (this.debug)
+    if (this.debugMode)
       console.log(
         `Statelog client initialized with host: ${host} and TID: ${this.tid}`
       );
   }
 
-  logDebug(message: string, data: Record<string, any>): void {
+  debug(message: string, data: any): void {
     this.post({
       type: "debug",
       message: message,
@@ -24,7 +24,7 @@ export class StatelogClient {
     });
   }
 
-  logGraph({
+  graph({
     nodes,
     edges,
     startNode,
@@ -43,6 +43,55 @@ export class StatelogClient {
     });
   }
 
+  enterNode(nodeId: string, data: any): void {
+    this.post({
+      type: "enterNode",
+      nodeId,
+      data,
+    });
+  }
+
+  exitNode(nodeId: string, data: any): void {
+    this.post({
+      type: "exitNode",
+      nodeId,
+      data,
+    });
+  }
+
+  beforeHook(nodeId: string, startData: any, endData: any): void {
+    this.post({
+      type: "beforeHook",
+      nodeId,
+      startData,
+      endData,
+    });
+  }
+
+  afterHook(nodeId: string, startData: any, endData: any): void {
+    this.post({
+      type: "afterHook",
+      nodeId,
+      startData,
+      endData,
+    });
+  }
+
+  followEdge(
+    fromNodeId: string,
+    toNodeId: string,
+    isConditionalEdge: boolean,
+    data: any
+  ): void {
+    this.post({
+      type: "followEdge",
+      fromNodeId,
+      toNodeId,
+      isConditionalEdge,
+      data,
+    });
+  }
+
   post(body: Record<string, any>): void {
     const fullUrl = new URL("/api/logs", this.host);
     const url = fullUrl.toString();
@@ -58,7 +107,7 @@ export class StatelogClient {
         timeStamp: new Date().toISOString(),
       }),
     }).catch((err) => {
-      if (this.debug) console.error("Failed to send statelog:", err);
+      if (this.debugMode) console.error("Failed to send statelog:", err);
     });
   }
 }
