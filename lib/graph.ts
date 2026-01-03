@@ -88,20 +88,36 @@ export class Graph<T, N extends string> {
       if (this.config.hooks?.beforeNode) {
         this.debug(`Before hook for node: ${color.green(currentId)}`, data);
         const startData = data;
+        const startTime = performance.now();
         data = await this.config.hooks!.beforeNode!(currentId, data);
-        this.statelogClient?.beforeHook(currentId, startData, data);
+        const endTime = performance.now();
+        this.statelogClient?.beforeHook(
+          currentId,
+          startData,
+          data,
+          endTime - startTime
+        );
       }
       this.debug(`Executing node: ${color.green(currentId)}`, data);
       this.statelogClient?.enterNode(currentId, data);
+      const startTime = performance.now();
       data = await this.runAndValidate(nodeFunc, currentId, data);
-      this.statelogClient?.exitNode(currentId, data);
+      const endTime = performance.now();
+      this.statelogClient?.exitNode(currentId, data, endTime - startTime);
       this.debug(`Completed node: ${color.green(currentId)}`, data);
 
       if (this.config.hooks?.afterNode) {
         this.debug(`After hook for node: ${color.green(currentId)}`, data);
         const startData = data;
+        const startTime = performance.now();
         data = await this.config.hooks!.afterNode!(currentId, data);
-        this.statelogClient?.afterHook(currentId, startData, data);
+        const endTime = performance.now();
+        this.statelogClient?.afterHook(
+          currentId,
+          startData,
+          data,
+          endTime - startTime
+        );
       }
 
       const edges = this.edges[currentId] || [];

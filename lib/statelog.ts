@@ -49,29 +49,42 @@ export class StatelogClient {
     });
   }
 
-  exitNode(nodeId: string, data: any): void {
+  exitNode(nodeId: string, data: any, timeTaken?: number): void {
     this.post({
       type: "exitNode",
       nodeId,
       data,
+      timeTaken,
     });
   }
 
-  beforeHook(nodeId: string, startData: any, endData: any): void {
+  beforeHook(
+    nodeId: string,
+    startData: any,
+    endData: any,
+    timeTaken?: number
+  ): void {
     this.post({
       type: "beforeHook",
       nodeId,
       startData,
       endData,
+      timeTaken,
     });
   }
 
-  afterHook(nodeId: string, startData: any, endData: any): void {
+  afterHook(
+    nodeId: string,
+    startData: any,
+    endData: any,
+    timeTaken?: number
+  ): void {
     this.post({
       type: "afterHook",
       nodeId,
       startData,
       endData,
+      timeTaken,
     });
   }
 
