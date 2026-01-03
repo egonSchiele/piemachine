@@ -41,7 +41,7 @@ export class Graph {
         this.edges[from].push(conditionalEdge(to, adjacentNodes));
     }
     debug(message, data) {
-        var _a, _b, _c;
+        var _a, _b;
         let debugStr = `${color.magenta("[DEBUG]")}: ${message}`;
         if (((_a = this.config.debug) === null || _a === void 0 ? void 0 : _a.logData) && data !== undefined) {
             debugStr += ` | Data: ${color.green(JSON.stringify(data))}`;
@@ -49,17 +49,17 @@ export class Graph {
         if ((_b = this.config.debug) === null || _b === void 0 ? void 0 : _b.log) {
             console.log(debugStr);
         }
-        (_c = this.statelogClient) === null || _c === void 0 ? void 0 : _c.logDebug(message, data || {});
+        //this.statelogClient?.debug(message, data || {});
     }
     run(startId, input) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j;
             const jsonEdges = {};
             for (const from in this.edges) {
                 jsonEdges[from] =
                     this.edges[from].map(edgeToJSON);
             }
-            (_a = this.statelogClient) === null || _a === void 0 ? void 0 : _a.logGraph({
+            (_a = this.statelogClient) === null || _a === void 0 ? void 0 : _a.graph({
                 nodes: Object.keys(this.nodes),
                 edges: jsonEdges,
                 startNode: startId,
@@ -74,23 +74,31 @@ export class Graph {
                 }
                 if ((_b = this.config.hooks) === null || _b === void 0 ? void 0 : _b.beforeNode) {
                     this.debug(`Before hook for node: ${color.green(currentId)}`, data);
+                    const startData = data;
                     data = yield this.config.hooks.beforeNode(currentId, data);
+                    (_c = this.statelogClient) === null || _c === void 0 ? void 0 : _c.beforeHook(currentId, startData, data);
                 }
                 this.debug(`Executing node: ${color.green(currentId)}`, data);
+                (_d = this.statelogClient) === null || _d === void 0 ? void 0 : _d.enterNode(currentId, data);
                 data = yield this.runAndValidate(nodeFunc, currentId, data);
+                (_e = this.statelogClient) === null || _e === void 0 ? void 0 : _e.exitNode(currentId, data);
                 this.debug(`Completed node: ${color.green(currentId)}`, data);
-                if ((_c = this.config.hooks) === null || _c === void 0 ? void 0 : _c.afterNode) {
+                if ((_f = this.config.hooks) === null || _f === void 0 ? void 0 : _f.afterNode) {
                     this.debug(`After hook for node: ${color.green(currentId)}`, data);
+                    const startData = data;
                     data = yield this.config.hooks.afterNode(currentId, data);
+                    (_g = this.statelogClient) === null || _g === void 0 ? void 0 : _g.afterHook(currentId, startData, data);
                 }
                 const edges = this.edges[currentId] || [];
                 for (const edge of edges) {
                     if (isRegularEdge(edge)) {
                         stack.push(edge.to);
+                        (_h = this.statelogClient) === null || _h === void 0 ? void 0 : _h.followEdge(currentId, edge.to, false, data);
                         this.debug(`Following regular edge to: ${color.green(edge.to)}`);
                     }
                     else {
                         const nextId = yield edge.condition(data);
+                        (_j = this.statelogClient) === null || _j === void 0 ? void 0 : _j.followEdge(currentId, nextId, true, data);
                         this.debug(`Following conditional edge to: ${color.green(nextId)}`, data);
                         stack.push(nextId);
                     }
