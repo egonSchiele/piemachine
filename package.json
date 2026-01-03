@@ -1,6 +1,6 @@
 {
   "name": "simplemachine",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "A parser combinator library for TypeScript, inspired by Parsec.",
   "homepage": "https://github.com/egonSchiele/simplemachine",
   "scripts": {

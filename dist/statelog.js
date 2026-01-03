@@ -71,7 +71,10 @@ export class StatelogClient {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(Object.assign(Object.assign({ tid: this.tid }, body), { timeStamp: new Date().toISOString() })),
+            body: JSON.stringify({
+                tid: this.tid,
+                data: Object.assign(Object.assign({}, body), { timeStamp: new Date().toISOString() }),
+            }),
         }).catch((err) => {
             if (this.debugMode)
                 console.error("Failed to send statelog:", err);
