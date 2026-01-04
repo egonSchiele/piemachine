@@ -4,7 +4,7 @@ export type GraphConfig<T> = {
     logData?: boolean;
   };
   validation?: {
-    func?: (data: T) => boolean;
+    func?: (data: T) => Promise<boolean>;
     maxRetries?: number;
   };
   hooks?: {
@@ -27,7 +27,7 @@ export type ConditionalFunc<T, N extends string> = (
 ) => Promise<NoInfer<N>>;
 export type ConditionalEdge<T, N extends string> = {
   type: "conditional";
-  condition: ConditionalFunc<T, N>;
+  condition?: ConditionalFunc<T, N>;
   adjacentNodes: readonly N[];
 };
 
@@ -36,7 +36,7 @@ export function regularEdge<N extends string>(to: N): RegularEdge<N> {
 }
 
 export function conditionalEdge<T, N extends string>(
-  condition: ConditionalFunc<T, N>,
+  condition: ConditionalFunc<T, N> | undefined,
   adjacentNodes: readonly N[]
 ): ConditionalEdge<T, N> {
   return { type: "conditional", condition, adjacentNodes };

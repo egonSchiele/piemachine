@@ -1,4 +1,5 @@
-import { Graph } from "./lib/graph.js";
+import { goToNode, Graph } from "./lib/graph.js";
+import { GraphConfig } from "./lib/types.js";
 // The state type for our graph
 type State = {
   count: number;
@@ -6,10 +7,14 @@ type State = {
 };
 
 // enable debug logging
-const graphConfig = {
+const graphConfig: GraphConfig<State> = {
   debug: {
     log: true,
     logData: true,
+  },
+  validation: {
+    func: async (data: State) => data.count >= 0,
+    maxRetries: 3,
   },
 };
 
@@ -30,24 +35,33 @@ graph.node("start", async (data) => {
 });
 
 graph.node("increment", async (data) => {
-  return {
+  const newCount = data.count + 1;
+  const newData = {
     ...data,
-    count: data.count + 1,
-    log: [...data.log, `Incremented count to ${data.count + 1}`],
+    count: newCount,
+    log: [...data.log, `Incremented count to ${newCount}`],
   };
+
+  // Nodes can return GoToNode to jump to a specific node next
+  if (newCount < 2) {
+    return goToNode("increment", newData);
+  }
+  return goToNode("finish", newData);
 });
 
 graph.node("finish", async (data) => data);
 
+graph.conditionalEdge("increment", ["finish", "increment"]);
+
 // Define the edges between the nodes
 graph.edge("start", "increment");
-graph.conditionalEdge("increment", ["finish", "increment"], async (data) => {
+/* graph.conditionalEdge("increment", ["finish", "increment"], async (data) => {
   if (data.count < 2) {
     return "increment";
   } else {
     return "finish";
   }
-});
+}); */
 
 async function main() {
   // Run the graph starting from the "start" node with an initial state

@@ -30,7 +30,7 @@ export class StatelogClient {
     startNode,
   }: {
     nodes: string[];
-    edges: Record<string, JSONEdge[]>;
+    edges: Record<string, JSONEdge>;
     startNode?: string;
   }): void {
     this.post({

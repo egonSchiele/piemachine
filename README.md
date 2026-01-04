@@ -113,3 +113,61 @@ graph TD
   increment --> increment
 */
 ```
+
+## More about routing
+
+There are three ways a node can route to another node. One is to specify a single edge to the next node:
+
+```typescript
+graph.edge("start", "increment");
+```
+
+Alternatively, a node can conditionally route to multiple other nodes. It can do so by returning an instance of `GoToNode`, where the first parameter is the name of the node it wants to route to, and the second parameter is the data it is sending to that node.
+
+```typescript
+graph.node("increment", async (data) => {
+  const newCount = data.count + 1;
+  const newData = {
+    ...data,
+    count: newCount,
+    log: [...data.log, `Incremented count to ${newCount}`],
+  };
+
+  // Nodes can return GoToNode to jump to a specific node next
+  if (newCount < 2) {
+    // or new GoToNode("increment", newData);
+    return goToNode("increment", newData);
+  }
+  return goToNode("finish", newData);
+});
+
+```
+If you go with this approach, you also need to specify all the possible nodes that the node could route to.
+
+```typescript
+graph.conditionalEdge("increment", ["finish", "increment"]);
+```
+
+Finally, a node can conditionally route to multiple other nodes by having a routing function in the call to `conditionalEdge`.
+
+```typescript
+graph.conditionalEdge("increment", ["finish", "increment"], async (data) => {
+  if (data.count < 2) {
+    return "increment";
+  } else {
+    return "finish";
+  }
+});
+```
+
+Note that if you want a node to route to multiple other nodes, you need to do so conditionally. You can't have a node route to multiple other nodes in parallel:
+
+```typescript
+// This is not allowed
+graph.edge("start", ["increment", "finish"]);
+
+// This is also not allowed
+graph.edge("start", "increment");
+graph.edge("start", "finish");
+```
+
