@@ -1,6 +1,6 @@
 {
   "name": "simplemachine",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "description": "A parser combinator library for TypeScript, inspired by Parsec.",
   "homepage": "https://github.com/egonSchiele/simplemachine",
   "scripts": {
@@ -33,13 +33,13 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.19.27",
-    "@vitest/coverage-v8": "^1.6.1",
     "prettier": "3.2.5",
     "typescript": "^5.9.3",
     "vitest": "^1.6.1"
   },
   "dependencies": {
     "nanoid": "^5.1.6",
+    "statelog-client": "github:egonSchiele/statelog-client",
     "termcolors": "github:egonSchiele/termcolors"
   }
 }

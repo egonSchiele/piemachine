@@ -1,7 +1,7 @@
 import { color } from "termcolors";
 
 import { GraphError } from "./error.js";
-import { StatelogClient } from "./statelog.js";
+import { StatelogClient } from "statelog-client";
 import {
   conditionalEdge,
   ConditionalFunc,
@@ -33,10 +33,11 @@ export class Graph<T, N extends string> {
   constructor(nodes: readonly N[], config: GraphConfig<T> = {}) {
     this.config = config;
     if (config.statelogHost) {
-      this.statelogClient = new StatelogClient(
-        config.statelogHost,
-        config.debug?.log ?? false
-      );
+      this.statelogClient = new StatelogClient({
+        host: config.statelogHost,
+        debugMode: config.debug?.log ?? false,
+        tid: config.traceId,
+      });
     }
   }
 
@@ -106,15 +107,15 @@ export class Graph<T, N extends string> {
         const startTime = performance.now();
         data = await this.config.hooks!.beforeNode!(currentId, data);
         const endTime = performance.now();
-        this.statelogClient?.beforeHook(
-          currentId,
+        this.statelogClient?.beforeHook({
+          nodeId: currentId,
           startData,
-          data,
-          endTime - startTime
-        );
+          endData: data,
+          timeTaken: endTime - startTime,
+        });
       }
       this.debug(`Executing node: ${color.green(currentId)}`, data);
-      this.statelogClient?.enterNode(currentId, data);
+      this.statelogClient?.enterNode({ nodeId: currentId, data });
       const startTime = performance.now();
       const result = await this.runAndValidate(nodeFunc, currentId, data);
       const endTime = performance.now();
@@ -125,7 +126,11 @@ export class Graph<T, N extends string> {
       } else {
         data = result;
       }
-      this.statelogClient?.exitNode(currentId, data, endTime - startTime);
+      this.statelogClient?.exitNode({
+        nodeId: currentId,
+        data,
+        timeTaken: endTime - startTime,
+      });
       this.debug(`Completed node: ${color.green(currentId)}`, data);
 
       if (this.config.hooks?.afterNode) {
@@ -134,12 +139,12 @@ export class Graph<T, N extends string> {
         const startTime = performance.now();
         data = await this.config.hooks!.afterNode!(currentId, data);
         const endTime = performance.now();
-        this.statelogClient?.afterHook(
-          currentId,
+        this.statelogClient?.afterHook({
+          nodeId: currentId,
           startData,
-          data,
-          endTime - startTime
-        );
+          endData: data,
+          timeTaken: endTime - startTime,
+        });
       }
       const edge = this.edges[currentId];
       if (edge === undefined) {
@@ -153,12 +158,12 @@ export class Graph<T, N extends string> {
             `${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`
           );
         }
-        this.statelogClient?.followEdge(
-          currentId,
-          nextNode as string,
-          false,
-          data
-        );
+        this.statelogClient?.followEdge({
+          fromNodeId: currentId,
+          toNodeId: nextNode as string,
+          isConditionalEdge: false,
+          data,
+        });
         this.debug(
           `Following goto edge to: ${color.green(nextNode as string)}`,
           data
@@ -168,13 +173,23 @@ export class Graph<T, N extends string> {
       }
 
       if (isRegularEdge(edge)) {
-        this.statelogClient?.followEdge(currentId, edge.to, false, data);
+        this.statelogClient?.followEdge({
+          fromNodeId: currentId,
+          toNodeId: edge.to,
+          isConditionalEdge: false,
+          data,
+        });
         this.debug(`Following regular edge to: ${color.green(edge.to)}`);
         currentId = edge.to;
       } else {
         if (edge.condition) {
           const nextId = await edge.condition(data);
-          this.statelogClient?.followEdge(currentId, nextId, true, data);
+          this.statelogClient?.followEdge({
+            fromNodeId: currentId,
+            toNodeId: nextId,
+            isConditionalEdge: true,
+            data,
+          });
           this.debug(
             `Following conditional edge to: ${color.green(nextId)}`,
             data
