@@ -1,8 +1,8 @@
 {
-  "name": "simplemachine",
-  "version": "0.0.28",
-  "description": "A parser combinator library for TypeScript, inspired by Parsec.",
-  "homepage": "https://github.com/egonSchiele/simplemachine",
+  "name": "piemachine",
+  "version": "0.0.1",
+  "description": "A general-purpose library for defining and running state machines. Easy as pie.",
+  "homepage": "https://github.com/egonSchiele/piemachine",
   "scripts": {
     "test": "vitest",
     "test:tsc": "tsc -p tests/tsconfig.json",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "nanoid": "^5.1.6",
-    "statelog-client": "github:egonSchiele/statelog-client",
+    "statelog-client": "^0.0.31",
     "termcolors": "github:egonSchiele/termcolors"
   }
 }

@@ -1,15 +1,15 @@
 import { color } from "termcolors";
 
-import { GraphError } from "./error.js";
+import { PieMachineError } from "./error.js";
 import { StatelogClient } from "statelog-client";
 import {
   conditionalEdge,
   ConditionalFunc,
   Edge,
   edgeToJSON,
-  GraphConfig,
   isRegularEdge,
   JSONEdge,
+  PieMachineConfig,
   regularEdge,
 } from "./types.js";
 
@@ -24,19 +24,21 @@ export function goToNode<T, N extends string>(to: N, data: T): GoToNode<T, N> {
   return new GoToNode(to, data);
 }
 
-export class Graph<T, N extends string> {
+export class PieMachine<T, N extends string> {
   private nodes: Partial<Record<N, (data: T) => Promise<T | GoToNode<T, N>>>> =
     {};
   private edges: Partial<Record<N, Edge<T, N>>> = {};
-  private config: GraphConfig<T>;
+  private config: PieMachineConfig<T>;
   private statelogClient: StatelogClient | null = null;
-  constructor(nodes: readonly N[], config: GraphConfig<T> = {}) {
+  constructor(nodes: N[], config: PieMachineConfig<T> = {}) {
     this.config = config;
-    if (config.statelogHost) {
+    if (config.statelog) {
       this.statelogClient = new StatelogClient({
-        host: config.statelogHost,
-        debugMode: config.debug?.log ?? false,
-        tid: config.traceId,
+        host: config.statelog.host,
+        apiKey: config.statelog.apiKey,
+        projectId: config.statelog.projectId,
+        traceId: config.statelog.traceId,
+        debugMode: config.statelog.debugMode ?? false,
       });
     }
   }
@@ -49,7 +51,7 @@ export class Graph<T, N extends string> {
     if (!this.edges[from]) {
       this.edges[from] = regularEdge(to);
     } else {
-      throw new GraphError(
+      throw new PieMachineError(
         ` ${from} already has an edge, which leads to ${this.edges[from]}.`
       );
     }
@@ -63,7 +65,7 @@ export class Graph<T, N extends string> {
     if (!this.edges[from]) {
       this.edges[from] = conditionalEdge(to, adjacentNodes);
     } else {
-      throw new GraphError(
+      throw new PieMachineError(
         ` ${from} already has an edge, which leads to ${this.edges[from]}.`
       );
     }
@@ -98,7 +100,7 @@ export class Graph<T, N extends string> {
       const nodeFunc = this.nodes[currentId];
 
       if (!nodeFunc) {
-        throw new GraphError(`Node function for ${currentId} not found.`);
+        throw new PieMachineError(`Node function for ${currentId} not found.`);
       }
 
       if (this.config.hooks?.beforeNode) {
@@ -154,7 +156,7 @@ export class Graph<T, N extends string> {
       if (nextNode && edge) {
         const isValidTarget = this.validateGoToNodeTarget(nextNode, edge);
         if (!isValidTarget) {
-          throw new GraphError(
+          throw new PieMachineError(
             `${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`
           );
         }
@@ -196,7 +198,7 @@ export class Graph<T, N extends string> {
           );
           currentId = nextId;
         } else {
-          throw new GraphError(
+          throw new PieMachineError(
             `Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`
           );
         }
@@ -223,7 +225,7 @@ export class Graph<T, N extends string> {
       let isValid = await this.config.validation.func(data);
       while (!isValid) {
         if (retries >= maxRetries) {
-          throw new GraphError(
+          throw new PieMachineError(
             `Validation failed for node ${currentId} after ${maxRetries} retries.`
           );
         }

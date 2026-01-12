@@ -10,7 +10,7 @@ export declare class Graph<T, N extends string> {
     private edges;
     private config;
     private statelogClient;
-    constructor(nodes: readonly N[], config?: GraphConfig<T>);
+    constructor(config?: GraphConfig<T>);
     node(id: N, func: (data: T) => Promise<T | GoToNode<T, N>>): void;
     edge(from: N, to: N): void;
     conditionalEdge<const Adjacent extends N>(from: N, adjacentNodes: readonly Adjacent[], to?: ConditionalFunc<T, Adjacent>): void;

@@ -21,17 +21,19 @@ export function goToNode(to, data) {
     return new GoToNode(to, data);
 }
 export class Graph {
-    constructor(nodes, config = {}) {
-        var _a, _b;
+    constructor(config = {}) {
+        var _a;
         this.nodes = {};
         this.edges = {};
         this.statelogClient = null;
         this.config = config;
-        if (config.statelogHost) {
+        if (config.statelog) {
             this.statelogClient = new StatelogClient({
-                host: config.statelogHost,
-                debugMode: (_b = (_a = config.debug) === null || _a === void 0 ? void 0 : _a.log) !== null && _b !== void 0 ? _b : false,
-                tid: config.traceId,
+                host: config.statelog.host,
+                apiKey: config.statelog.apiKey,
+                projectId: config.statelog.projectId,
+                traceId: config.statelog.traceId,
+                debugMode: (_a = config.statelog.debugMode) !== null && _a !== void 0 ? _a : false,
             });
         }
     }

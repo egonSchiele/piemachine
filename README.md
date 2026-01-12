@@ -1,6 +1,6 @@
-# graph
+# pie machine
 
-A general-purpose library for defining and running graphs. Can be used to build agents but is also broadly useful.
+A general-purpose library for defining and running state machines. Easy as pie.
 
 ## Quickstart
 
