@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { color } from "termcolors";
-import { GraphError } from "./error.js";
+import { PieMachineError } from "./error.js";
 import { StatelogClient } from "statelog-client";
 import { conditionalEdge, edgeToJSON, isRegularEdge, regularEdge, } from "./types.js";
 export class GoToNode {
@@ -20,8 +20,8 @@ export class GoToNode {
 export function goToNode(to, data) {
     return new GoToNode(to, data);
 }
-export class Graph {
-    constructor(config = {}) {
+export class PieMachine {
+    constructor(nodes, config = {}) {
         var _a;
         this.nodes = {};
         this.edges = {};
@@ -45,7 +45,7 @@ export class Graph {
             this.edges[from] = regularEdge(to);
         }
         else {
-            throw new GraphError(` ${from} already has an edge, which leads to ${this.edges[from]}.`);
+            throw new PieMachineError(` ${from} already has an edge, which leads to ${this.edges[from]}.`);
         }
     }
     conditionalEdge(from, adjacentNodes, to) {
@@ -53,7 +53,7 @@ export class Graph {
             this.edges[from] = conditionalEdge(to, adjacentNodes);
         }
         else {
-            throw new GraphError(` ${from} already has an edge, which leads to ${this.edges[from]}.`);
+            throw new PieMachineError(` ${from} already has an edge, which leads to ${this.edges[from]}.`);
         }
     }
     debug(message, data) {
@@ -84,7 +84,7 @@ export class Graph {
             while (currentId) {
                 const nodeFunc = this.nodes[currentId];
                 if (!nodeFunc) {
-                    throw new GraphError(`Node function for ${currentId} not found.`);
+                    throw new PieMachineError(`Node function for ${currentId} not found.`);
                 }
                 if ((_b = this.config.hooks) === null || _b === void 0 ? void 0 : _b.beforeNode) {
                     this.debug(`Before hook for node: ${color.green(currentId)}`, data);
@@ -139,7 +139,7 @@ export class Graph {
                 if (nextNode && edge) {
                     const isValidTarget = this.validateGoToNodeTarget(nextNode, edge);
                     if (!isValidTarget) {
-                        throw new GraphError(`${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`);
+                        throw new PieMachineError(`${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`);
                     }
                     (_h = this.statelogClient) === null || _h === void 0 ? void 0 : _h.followEdge({
                         fromNodeId: currentId,
@@ -174,7 +174,7 @@ export class Graph {
                         currentId = nextId;
                     }
                     else {
-                        throw new GraphError(`Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`);
+                        throw new PieMachineError(`Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`);
                     }
                 }
             }
@@ -197,7 +197,7 @@ export class Graph {
                 let isValid = yield this.config.validation.func(data);
                 while (!isValid) {
                     if (retries >= maxRetries) {
-                        throw new GraphError(`Validation failed for node ${currentId} after ${maxRetries} retries.`);
+                        throw new PieMachineError(`Validation failed for node ${currentId} after ${maxRetries} retries.`);
                     }
                     this.debug(`Validation failed for node ${color.green(currentId)}, retrying... (${retries + 1}/${maxRetries})`, data);
                     return this.runAndValidate(nodeFunc, currentId, _data, retries + 1);

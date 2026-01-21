@@ -1,3 +1,3 @@
-export * from "./graph.js";
+export * from "./pieMachine.js";
 export * from "./types.js";
 export * from "./error.js";

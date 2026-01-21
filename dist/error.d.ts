@@ -1,4 +1,4 @@
-declare class GraphError extends Error {
+declare class PieMachineError extends Error {
     constructor(message: string);
 }
-export { GraphError };
+export { PieMachineError };

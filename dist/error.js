@@ -1,7 +1,7 @@
-class GraphError extends Error {
+class PieMachineError extends Error {
     constructor(message) {
         super(message);
-        this.name = "GraphError";
+        this.name = "PieMachineError";
     }
 }
-export { GraphError };
+export { PieMachineError };

@@ -1,4 +1,4 @@
-export type GraphConfig<T> = {
+export type PieMachineConfig<T> = {
     debug?: {
         log?: boolean;
         logData?: boolean;

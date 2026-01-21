@@ -30,7 +30,7 @@ export class PieMachine<T, N extends string> {
   private edges: Partial<Record<N, Edge<T, N>>> = {};
   private config: PieMachineConfig<T>;
   private statelogClient: StatelogClient | null = null;
-  constructor(nodes: N[], config: PieMachineConfig<T> = {}) {
+  constructor(nodes: readonly N[], config: PieMachineConfig<T> = {}) {
     this.config = config;
     if (config.statelog) {
       this.statelogClient = new StatelogClient({
