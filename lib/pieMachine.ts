@@ -16,7 +16,7 @@ import {
 export class GoToNode<T, N extends string> {
   constructor(
     public to: N,
-    public data: T
+    public data: T,
   ) {}
 }
 
@@ -52,7 +52,7 @@ export class PieMachine<T, N extends string> {
       this.edges[from] = regularEdge(to);
     } else {
       throw new PieMachineError(
-        ` ${from} already has an edge, which leads to ${this.edges[from]}.`
+        ` ${from} already has an edge, which leads to ${this.edges[from]}.`,
       );
     }
   }
@@ -60,13 +60,13 @@ export class PieMachine<T, N extends string> {
   conditionalEdge<const Adjacent extends N>(
     from: N,
     adjacentNodes: readonly Adjacent[],
-    to?: ConditionalFunc<T, Adjacent>
+    to?: ConditionalFunc<T, Adjacent>,
   ): void {
     if (!this.edges[from]) {
       this.edges[from] = conditionalEdge(to, adjacentNodes);
     } else {
       throw new PieMachineError(
-        ` ${from} already has an edge, which leads to ${this.edges[from]}.`
+        ` ${from} already has an edge, which leads to ${this.edges[from]}.`,
       );
     }
   }
@@ -86,7 +86,7 @@ export class PieMachine<T, N extends string> {
     const jsonEdges: Record<string, JSONEdge> = {};
     for (const from in this.edges) {
       jsonEdges[from] = edgeToJSON(
-        this.edges[from as keyof typeof this.edges]!
+        this.edges[from as keyof typeof this.edges]!,
       );
     }
     this.statelogClient?.graph({
@@ -157,7 +157,7 @@ export class PieMachine<T, N extends string> {
         const isValidTarget = this.validateGoToNodeTarget(nextNode, edge);
         if (!isValidTarget) {
           throw new PieMachineError(
-            `${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`
+            `${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`,
           );
         }
         this.statelogClient?.followEdge({
@@ -168,12 +168,11 @@ export class PieMachine<T, N extends string> {
         });
         this.debug(
           `Following goto edge to: ${color.green(nextNode as string)}`,
-          data
+          data,
         );
         currentId = nextNode as N;
         continue;
       }
-
       if (isRegularEdge(edge)) {
         this.statelogClient?.followEdge({
           fromNodeId: currentId,
@@ -194,13 +193,15 @@ export class PieMachine<T, N extends string> {
           });
           this.debug(
             `Following conditional edge to: ${color.green(nextId)}`,
-            data
+            data,
           );
           currentId = nextId;
         } else {
-          throw new PieMachineError(
-            `Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`
-          );
+          this.debug(`Exiting graph from node: ${color.green(currentId)}`);
+          currentId = null;
+          /* throw new PieMachineError(
+            `Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`,
+          ); */
         }
       }
     }
@@ -211,7 +212,7 @@ export class PieMachine<T, N extends string> {
     nodeFunc: (data: T) => Promise<T | GoToNode<T, N>>,
     currentId: N,
     _data: T,
-    retries = 0
+    retries = 0,
   ): Promise<T | GoToNode<T, N>> {
     const result = await nodeFunc(_data);
     let data: T;
@@ -226,14 +227,14 @@ export class PieMachine<T, N extends string> {
       while (!isValid) {
         if (retries >= maxRetries) {
           throw new PieMachineError(
-            `Validation failed for node ${currentId} after ${maxRetries} retries.`
+            `Validation failed for node ${currentId} after ${maxRetries} retries.`,
           );
         }
         this.debug(
           `Validation failed for node ${color.green(currentId)}, retrying... (${
             retries + 1
           }/${maxRetries})`,
-          data
+          data,
         );
         return this.runAndValidate(nodeFunc, currentId, _data, retries + 1);
       }

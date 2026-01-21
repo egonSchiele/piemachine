@@ -174,7 +174,11 @@ export class PieMachine {
                         currentId = nextId;
                     }
                     else {
-                        throw new PieMachineError(`Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`);
+                        this.debug(`Exiting graph from node: ${color.green(currentId)}`);
+                        currentId = null;
+                        /* throw new PieMachineError(
+                          `Expected ${currentId} to return a GoToNode, as no function was specified for the conditional edges to ${edge.adjacentNodes.join(", ")}.`,
+                        ); */
                     }
                 }
             }
