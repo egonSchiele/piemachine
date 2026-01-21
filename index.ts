@@ -1,5 +1,5 @@
-import { goToNode, Graph } from "./lib/graph.js";
-import { GraphConfig } from "./lib/types.js";
+import { goToNode, PieMachine } from "./lib/pieMachine.js";
+import { PieMachineConfig } from "./lib/types.js";
 // The state type for our graph
 type State = {
   count: number;
@@ -7,7 +7,7 @@ type State = {
 };
 
 // enable debug logging
-const graphConfig: GraphConfig<State> = {
+const graphConfig: PieMachineConfig<State> = {
   debug: {
     log: true,
     logData: true,
@@ -24,7 +24,7 @@ const nodes = ["start", "increment", "finish"] as const;
 type Node = (typeof nodes)[number];
 
 // Create a new graph
-const graph = new Graph<State, Node>(nodes, graphConfig);
+const graph = new PieMachine<State, Node>(nodes, graphConfig);
 
 // Add some nodes! Each node is an async function that takes the current state and returns a new state.
 graph.node("start", async (data) => {
@@ -46,6 +46,7 @@ graph.node("increment", async (data) => {
   if (newCount < 2) {
     return goToNode("increment", newData);
   }
+  return newData;
   return goToNode("finish", newData);
 });
 
