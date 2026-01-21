@@ -1,6 +1,6 @@
 {
   "name": "piemachine",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A general-purpose library for defining and running state machines. Easy as pie.",
   "homepage": "https://github.com/egonSchiele/piemachine",
   "scripts": {
