@@ -26,6 +26,7 @@ export class PieMachine {
         this.nodes = {};
         this.edges = {};
         this.statelogClient = null;
+        this.nodesTraversed = [];
         this.config = config;
         if (config.statelog) {
             this.statelogClient = new StatelogClient({
@@ -67,9 +68,13 @@ export class PieMachine {
         }
         //this.statelogClient?.debug(message, data || {});
     }
+    getNodesTraversed() {
+        return this.nodesTraversed;
+    }
     run(startId, input) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+            this.nodesTraversed = [];
             const jsonEdges = {};
             for (const from in this.edges) {
                 jsonEdges[from] = edgeToJSON(this.edges[from]);
@@ -82,6 +87,7 @@ export class PieMachine {
             let currentId = startId;
             let data = input;
             while (currentId) {
+                this.nodesTraversed.push(currentId);
                 const nodeFunc = this.nodes[currentId];
                 if (!nodeFunc) {
                     throw new PieMachineError(`Node function for ${currentId} not found.`);
@@ -242,6 +248,22 @@ export class PieMachine {
             }
         }
         return mermaid;
+    }
+    merge(another) {
+        for (const nodeId in another.nodes) {
+            if (this.nodes[nodeId]) {
+                throw new PieMachineError(`Node ${nodeId} already exists in the current PieMachine.`);
+            }
+            this.nodes[nodeId] =
+                another.nodes[nodeId];
+        }
+        for (const from in another.edges) {
+            if (this.edges[from]) {
+                throw new PieMachineError(`Edge from ${from} already exists in the current PieMachine.`);
+            }
+            this.edges[from] =
+                another.edges[from];
+        }
     }
     validateGoToNodeTarget(to, edge) {
         if (!isRegularEdge(edge)) {

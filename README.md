@@ -171,3 +171,9 @@ graph.edge("start", "increment");
 graph.edge("start", "finish");
 ```
 
+You can also merge multiple graphs into the same graph, as long as none of the nodes have the same name. This allows you to define your graph in multiple files if you wish.
+
+```typescript
+import { graph as categoryGraph } from "./bar.js";
+graph.merge(categoryGraph);
+```

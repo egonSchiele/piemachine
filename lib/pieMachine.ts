@@ -13,24 +13,26 @@ import {
   regularEdge,
 } from "./types.js";
 
-export class GoToNode<T, N extends string> {
+export class GoToNode<T> {
   constructor(
-    public to: N,
+    public to: string,
     public data: T,
   ) {}
 }
 
-export function goToNode<T, N extends string>(to: N, data: T): GoToNode<T, N> {
+export function goToNode<T>(to: string, data: T): GoToNode<T> {
   return new GoToNode(to, data);
 }
 
-export class PieMachine<T, N extends string> {
-  private nodes: Partial<Record<N, (data: T) => Promise<T | GoToNode<T, N>>>> =
-    {};
-  private edges: Partial<Record<N, Edge<T, N>>> = {};
+export class PieMachine<T> {
+  private nodes: Partial<
+    Record<string, (data: T) => Promise<T | GoToNode<T>>>
+  > = {};
+  private edges: Partial<Record<string, Edge<T, string>>> = {};
   private config: PieMachineConfig<T>;
   private statelogClient: StatelogClient | null = null;
-  constructor(nodes: readonly N[], config: PieMachineConfig<T> = {}) {
+  private nodesTraversed: string[] = [];
+  constructor(nodes: readonly string[], config: PieMachineConfig<T> = {}) {
     this.config = config;
     if (config.statelog) {
       this.statelogClient = new StatelogClient({
@@ -43,11 +45,11 @@ export class PieMachine<T, N extends string> {
     }
   }
 
-  node(id: N, func: (data: T) => Promise<T | GoToNode<T, N>>): void {
+  node(id: string, func: (data: T) => Promise<T | GoToNode<T>>): void {
     this.nodes[id] = func;
   }
 
-  edge(from: N, to: N): void {
+  edge(from: string, to: string): void {
     if (!this.edges[from]) {
       this.edges[from] = regularEdge(to);
     } else {
@@ -57,8 +59,8 @@ export class PieMachine<T, N extends string> {
     }
   }
 
-  conditionalEdge<const Adjacent extends N>(
-    from: N,
+  conditionalEdge<const Adjacent extends string>(
+    from: string,
     adjacentNodes: readonly Adjacent[],
     to?: ConditionalFunc<T, Adjacent>,
   ): void {
@@ -82,7 +84,12 @@ export class PieMachine<T, N extends string> {
     //this.statelogClient?.debug(message, data || {});
   }
 
-  async run(startId: N, input: T): Promise<T> {
+  getNodesTraversed(): readonly string[] {
+    return this.nodesTraversed;
+  }
+
+  async run(startId: string, input: T): Promise<T> {
+    this.nodesTraversed = [];
     const jsonEdges: Record<string, JSONEdge> = {};
     for (const from in this.edges) {
       jsonEdges[from] = edgeToJSON(
@@ -94,9 +101,10 @@ export class PieMachine<T, N extends string> {
       edges: jsonEdges,
       startNode: startId,
     });
-    let currentId: N | null = startId;
+    let currentId: string | null = startId;
     let data: T = input;
     while (currentId) {
+      this.nodesTraversed.push(currentId);
       const nodeFunc = this.nodes[currentId];
 
       if (!nodeFunc) {
@@ -170,7 +178,7 @@ export class PieMachine<T, N extends string> {
           `Following goto edge to: ${color.green(nextNode as string)}`,
           data,
         );
-        currentId = nextNode as N;
+        currentId = nextNode;
         continue;
       }
       if (isRegularEdge(edge)) {
@@ -209,11 +217,11 @@ export class PieMachine<T, N extends string> {
   }
 
   async runAndValidate(
-    nodeFunc: (data: T) => Promise<T | GoToNode<T, N>>,
-    currentId: N,
+    nodeFunc: (data: T) => Promise<T | GoToNode<T>>,
+    currentId: string,
     _data: T,
     retries = 0,
-  ): Promise<T | GoToNode<T, N>> {
+  ): Promise<T | GoToNode<T>> {
     const result = await nodeFunc(_data);
     let data: T;
     if (result instanceof GoToNode) {
@@ -250,7 +258,7 @@ export class PieMachine<T, N extends string> {
     }
   }
 
-  prettyPrintEdge(edge: Edge<T, N>): string {
+  prettyPrintEdge(edge: Edge<T, string>): string {
     if (isRegularEdge(edge)) {
       return edge.to;
     } else {
@@ -275,9 +283,30 @@ export class PieMachine<T, N extends string> {
     return mermaid;
   }
 
-  private validateGoToNodeTarget(to: string, edge: Edge<T, N>): boolean {
+  merge(another: PieMachine<T>): void {
+    for (const nodeId in another.nodes) {
+      if (this.nodes[nodeId as keyof typeof this.nodes]) {
+        throw new PieMachineError(
+          `Node ${nodeId} already exists in the current PieMachine.`,
+        );
+      }
+      this.nodes[nodeId as keyof typeof this.nodes] =
+        another.nodes[nodeId as keyof typeof another.nodes];
+    }
+    for (const from in another.edges) {
+      if (this.edges[from as keyof typeof this.edges]) {
+        throw new PieMachineError(
+          `Edge from ${from} already exists in the current PieMachine.`,
+        );
+      }
+      this.edges[from as keyof typeof this.edges] =
+        another.edges[from as keyof typeof another.edges];
+    }
+  }
+
+  private validateGoToNodeTarget(to: string, edge: Edge<T, string>): boolean {
     if (!isRegularEdge(edge)) {
-      if (edge.adjacentNodes.includes(to as N)) {
+      if (edge.adjacentNodes.includes(to)) {
         return true;
       }
     }
