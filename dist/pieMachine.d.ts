@@ -11,7 +11,7 @@ export declare class PieMachine<T> {
     private config;
     private statelogClient;
     private nodesTraversed;
-    constructor(nodes: readonly string[], config?: PieMachineConfig<T>);
+    constructor(config?: PieMachineConfig<T>);
     node(id: string, func: (data: T) => Promise<T | GoToNode<T>>): void;
     edge(from: string, to: string): void;
     conditionalEdge<const Adjacent extends string>(from: string, adjacentNodes: readonly Adjacent[], to?: ConditionalFunc<T, Adjacent>): void;
@@ -23,5 +23,15 @@ export declare class PieMachine<T> {
     prettyPrintEdge(edge: Edge<T, string>): string;
     toMermaid(): string;
     merge(another: PieMachine<T>): void;
+    toJSON(): {
+        nodes: string[];
+        edges: Record<string, string[]>;
+        config: {
+            debug: {
+                log?: boolean;
+                logData?: boolean;
+            } | undefined;
+        };
+    };
     private validateGoToNodeTarget;
 }

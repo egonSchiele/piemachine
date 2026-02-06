@@ -18,13 +18,8 @@ const graphConfig: PieMachineConfig<State> = {
   },
 };
 
-// Define the names of the nodes in the graph
-// Useful for type safety
-const nodes = ["start", "increment", "finish"] as const;
-type Node = (typeof nodes)[number];
-
 // Create a new graph
-const graph = new PieMachine<State, Node>(nodes, graphConfig);
+const graph = new PieMachine<State>(graphConfig);
 
 // Add some nodes! Each node is an async function that takes the current state and returns a new state.
 graph.node("start", async (data) => {
@@ -69,6 +64,7 @@ async function main() {
   const initialState: State = { count: 0, log: [] };
   const finalState = await graph.run("start", initialState);
   console.log(finalState);
+  console.log(JSON.stringify(graph));
 }
 
 main();

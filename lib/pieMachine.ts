@@ -32,7 +32,7 @@ export class PieMachine<T> {
   private config: PieMachineConfig<T>;
   private statelogClient: StatelogClient | null = null;
   private nodesTraversed: string[] = [];
-  constructor(nodes: readonly string[], config: PieMachineConfig<T> = {}) {
+  constructor(config: PieMachineConfig<T> = {}) {
     this.config = config;
     if (config.statelog) {
       this.statelogClient = new StatelogClient({
@@ -96,7 +96,7 @@ export class PieMachine<T> {
         this.edges[from as keyof typeof this.edges]!,
       );
     }
-    this.statelogClient?.graph({
+    await this.statelogClient?.graph({
       nodes: Object.keys(this.nodes),
       edges: jsonEdges,
       startNode: startId,
@@ -117,7 +117,7 @@ export class PieMachine<T> {
         const startTime = performance.now();
         data = await this.config.hooks!.beforeNode!(currentId, data);
         const endTime = performance.now();
-        this.statelogClient?.beforeHook({
+        await this.statelogClient?.beforeHook({
           nodeId: currentId,
           startData,
           endData: data,
@@ -125,7 +125,7 @@ export class PieMachine<T> {
         });
       }
       this.debug(`Executing node: ${color.green(currentId)}`, data);
-      this.statelogClient?.enterNode({ nodeId: currentId, data });
+      await this.statelogClient?.enterNode({ nodeId: currentId, data });
       const startTime = performance.now();
       const result = await this.runAndValidate(nodeFunc, currentId, data);
       const endTime = performance.now();
@@ -136,7 +136,7 @@ export class PieMachine<T> {
       } else {
         data = result;
       }
-      this.statelogClient?.exitNode({
+      await this.statelogClient?.exitNode({
         nodeId: currentId,
         data,
         timeTaken: endTime - startTime,
@@ -149,7 +149,7 @@ export class PieMachine<T> {
         const startTime = performance.now();
         data = await this.config.hooks!.afterNode!(currentId, data);
         const endTime = performance.now();
-        this.statelogClient?.afterHook({
+        await this.statelogClient?.afterHook({
           nodeId: currentId,
           startData,
           endData: data,
@@ -168,7 +168,7 @@ export class PieMachine<T> {
             `${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`,
           );
         }
-        this.statelogClient?.followEdge({
+        await this.statelogClient?.followEdge({
           fromNodeId: currentId,
           toNodeId: nextNode as string,
           isConditionalEdge: false,
@@ -182,7 +182,7 @@ export class PieMachine<T> {
         continue;
       }
       if (isRegularEdge(edge)) {
-        this.statelogClient?.followEdge({
+        await this.statelogClient?.followEdge({
           fromNodeId: currentId,
           toNodeId: edge.to,
           isConditionalEdge: false,
@@ -193,7 +193,7 @@ export class PieMachine<T> {
       } else {
         if (edge.condition) {
           const nextId = await edge.condition(data);
-          this.statelogClient?.followEdge({
+          await this.statelogClient?.followEdge({
             fromNodeId: currentId,
             toNodeId: nextId,
             isConditionalEdge: true,
@@ -302,6 +302,26 @@ export class PieMachine<T> {
       this.edges[from as keyof typeof this.edges] =
         another.edges[from as keyof typeof another.edges];
     }
+  }
+
+  toJSON() {
+    const edges: Record<string, string[]> = {};
+    for (const from in this.edges) {
+      const edge = this.edges[from as keyof typeof this.edges];
+      if (!edge) continue;
+      if (isRegularEdge(edge)) {
+        edges[from] = [edge.to];
+      } else {
+        edges[from] = edge.adjacentNodes as string[];
+      }
+    }
+    return {
+      nodes: Object.keys(this.nodes),
+      edges,
+      config: {
+        debug: this.config.debug,
+      },
+    };
   }
 
   private validateGoToNodeTarget(to: string, edge: Edge<T, string>): boolean {
