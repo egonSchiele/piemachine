@@ -11,7 +11,7 @@ type State = {
 describe("PieMachine", () => {
   describe("node()", () => {
     it("registers a node that can be executed", async () => {
-      const graph = new PieMachine<State, "start">(["start"]);
+      const graph = new PieMachine<State>();
       graph.node("start", async (data) => ({
         ...data,
         count: data.count + 1,
@@ -24,7 +24,7 @@ describe("PieMachine", () => {
 
   describe("edge()", () => {
     it("creates a regular edge with string destination", async () => {
-      const graph = new PieMachine<State, "a" | "b">(["a", "b"]);
+      const graph = new PieMachine<State>();
       graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
       graph.node("b", async (data) => ({ ...data, log: [...data.log, "b"] }));
       graph.edge("a", "b");
@@ -34,11 +34,7 @@ describe("PieMachine", () => {
     });
 
     it("creates a conditional edge with function destination", async () => {
-      const graph = new PieMachine<State, "start" | "high" | "low">([
-        "start",
-        "high",
-        "low",
-      ]);
+      const graph = new PieMachine<State>();
       graph.node("start", async (data) => data);
       graph.node("high", async (data) => ({ ...data, log: ["high"] }));
       graph.node("low", async (data) => ({ ...data, log: ["low"] }));
@@ -55,7 +51,7 @@ describe("PieMachine", () => {
     });
 
     it("handles edges for nodes defined later", async () => {
-      const graph = new PieMachine<State, "a" | "b">(["a", "b"]);
+      const graph = new PieMachine<State>();
       graph.edge("a", "b");
       graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
       graph.node("b", async (data) => ({ ...data, log: [...data.log, "b"] }));
@@ -67,7 +63,7 @@ describe("PieMachine", () => {
 
   describe("run()", () => {
     it("executes a single node and returns transformed data", async () => {
-      const graph = new PieMachine<State, "only">(["only"]);
+      const graph = new PieMachine<State>();
       graph.node("only", async (data) => ({
         count: data.count * 2,
         log: ["doubled"],
@@ -78,7 +74,7 @@ describe("PieMachine", () => {
     });
 
     it("follows a chain of regular edges", async () => {
-      const graph = new PieMachine<State, "a" | "b" | "c">(["a", "b", "c"]);
+      const graph = new PieMachine<State>();
       graph.node("a", async (data) => ({ ...data, count: data.count + 1 }));
       graph.node("b", async (data) => ({ ...data, count: data.count + 2 }));
       graph.node("c", async (data) => ({ ...data, count: data.count + 3 }));
@@ -91,11 +87,7 @@ describe("PieMachine", () => {
     });
 
     it("handles loop with conditional exit (index.ts pattern)", async () => {
-      const graph = new PieMachine<State, "start" | "increment" | "finish">([
-        "start",
-        "increment",
-        "finish",
-      ]);
+      const graph = new PieMachine<State>();
 
       graph.node("start", async (data) => ({
         ...data,
@@ -129,10 +121,7 @@ describe("PieMachine", () => {
     });
 
     it("throws PieMachineError when node function is not registered", async () => {
-      const graph = new PieMachine<State, "a" | "unregistered">([
-        "a",
-        "unregistered",
-      ]);
+      const graph = new PieMachine<State>();
       graph.node("a", async (data) => ({ ...data, log: ["a"] }));
       graph.edge("a", "unregistered");
 
@@ -147,20 +136,14 @@ describe("PieMachine", () => {
 
   describe("prettyPrintEdge()", () => {
     it("formats regular edge with destination node id", () => {
-      const graph = new PieMachine<State, "nodeA" | "nodeB">([
-        "nodeA",
-        "nodeB",
-      ]);
+      const graph = new PieMachine<State>();
       const edge = regularEdge("nodeB");
 
       expect(graph.prettyPrintEdge(edge)).toBe("nodeB");
     });
 
     it("formats conditional edge with adjacent nodes", () => {
-      const graph = new PieMachine<State, "someNode" | "otherNode">([
-        "someNode",
-        "otherNode",
-      ]);
+      const graph = new PieMachine<State>();
       const edge = conditionalEdge<State, "someNode" | "otherNode">(
         async () => "someNode",
         ["someNode", "otherNode"]
@@ -172,7 +155,7 @@ describe("PieMachine", () => {
 
   describe("prettyPrint()", () => {
     it("logs all edges to console", () => {
-      const graph = new PieMachine<State, "a" | "b" | "c">(["a", "b", "c"]);
+      const graph = new PieMachine<State>();
       graph.node("a", async (data) => data);
       graph.node("b", async (data) => data);
       graph.node("c", async (data) => data);
@@ -198,7 +181,7 @@ describe("PieMachine", () => {
         log: [...data.log, `before:${nodeId}`],
       }));
 
-      const graph = new PieMachine<State, "a" | "b">(["a", "b"], {
+      const graph = new PieMachine<State>({
         hooks: { beforeNode: beforeHook },
       });
       graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
@@ -218,7 +201,7 @@ describe("PieMachine", () => {
         log: [...data.log, `after:${nodeId}`],
       }));
 
-      const graph = new PieMachine<State, "a" | "b">(["a", "b"], {
+      const graph = new PieMachine<State>({
         hooks: { afterNode: afterHook },
       });
       graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
@@ -241,7 +224,7 @@ describe("PieMachine", () => {
         log: [...data.log, `after:${nodeId}`],
       }));
 
-      const graph = new PieMachine<State, "a">(["a"], {
+      const graph = new PieMachine<State>({
         hooks: { beforeNode: beforeHook, afterNode: afterHook },
       });
       graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
@@ -252,7 +235,7 @@ describe("PieMachine", () => {
     });
 
     it("passes modified data from beforeNode to node function", async () => {
-      const graph = new PieMachine<State, "a">(["a"], {
+      const graph = new PieMachine<State>({
         hooks: {
           beforeNode: async (_nodeId, data) => ({
             ...data,
@@ -272,7 +255,7 @@ describe("PieMachine", () => {
     it("passes when validation succeeds on first try", async () => {
       const validationFunc = vi.fn(async (data: State) => data.count > 0);
 
-      const graph = new PieMachine<State, "a">(["a"], {
+      const graph = new PieMachine<State>({
         validation: { func: validationFunc },
       });
       graph.node("a", async (data) => ({ ...data, count: data.count + 1 }));
@@ -285,7 +268,7 @@ describe("PieMachine", () => {
 
     it("retries node execution when validation fails", async () => {
       let callCount = 0;
-      const graph = new PieMachine<State, "a">(["a"], {
+      const graph = new PieMachine<State>({
         validation: {
           func: async (data: State) => data.count >= 3,
           maxRetries: 5,
@@ -303,7 +286,7 @@ describe("PieMachine", () => {
     });
 
     it("throws PieMachineError when validation fails after max retries", async () => {
-      const graph = new PieMachine<State, "a">(["a"], {
+      const graph = new PieMachine<State>({
         validation: {
           func: async () => false, // always fails
           maxRetries: 2,
@@ -320,7 +303,7 @@ describe("PieMachine", () => {
     });
 
     it("throws immediately when maxRetries is 0 and validation fails", async () => {
-      const graph = new PieMachine<State, "a">(["a"], {
+      const graph = new PieMachine<State>({
         validation: {
           func: async () => false,
           maxRetries: 0,
@@ -335,7 +318,7 @@ describe("PieMachine", () => {
 
     it("validates each node in sequence", async () => {
       const validationCalls: number[] = [];
-      const graph = new PieMachine<State, "a" | "b">(["a", "b"], {
+      const graph = new PieMachine<State>({
         validation: {
           func: async (data: State) => {
             validationCalls.push(data.count);

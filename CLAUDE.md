@@ -1,0 +1,1 @@
+Run tests using `pnpm run test:run`.

@@ -5,6 +5,7 @@
   "homepage": "https://github.com/egonSchiele/piemachine",
   "scripts": {
     "test": "vitest",
+    "test:run": "vitest run",
     "test:tsc": "tsc -p tests/tsconfig.json",
     "coverage": "vitest --coverage",
     "build": "rm -rf dist && tsc",
