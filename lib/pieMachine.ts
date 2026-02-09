@@ -96,7 +96,7 @@ export class PieMachine<T> {
         this.edges[from as keyof typeof this.edges]!,
       );
     }
-    await this.statelogClient?.graph({
+    this.statelogClient?.graph({
       nodes: Object.keys(this.nodes),
       edges: jsonEdges,
       startNode: startId,
@@ -117,7 +117,7 @@ export class PieMachine<T> {
         const startTime = performance.now();
         data = await this.config.hooks!.beforeNode!(currentId, data);
         const endTime = performance.now();
-        await this.statelogClient?.beforeHook({
+        this.statelogClient?.beforeHook({
           nodeId: currentId,
           startData,
           endData: data,
@@ -125,7 +125,7 @@ export class PieMachine<T> {
         });
       }
       this.debug(`Executing node: ${color.green(currentId)}`, data);
-      await this.statelogClient?.enterNode({ nodeId: currentId, data });
+      this.statelogClient?.enterNode({ nodeId: currentId, data });
       const startTime = performance.now();
       const result = await this.runAndValidate(nodeFunc, currentId, data);
       const endTime = performance.now();
@@ -136,7 +136,7 @@ export class PieMachine<T> {
       } else {
         data = result;
       }
-      await this.statelogClient?.exitNode({
+      this.statelogClient?.exitNode({
         nodeId: currentId,
         data,
         timeTaken: endTime - startTime,
@@ -149,7 +149,7 @@ export class PieMachine<T> {
         const startTime = performance.now();
         data = await this.config.hooks!.afterNode!(currentId, data);
         const endTime = performance.now();
-        await this.statelogClient?.afterHook({
+        this.statelogClient?.afterHook({
           nodeId: currentId,
           startData,
           endData: data,
@@ -168,7 +168,7 @@ export class PieMachine<T> {
             `${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`,
           );
         }
-        await this.statelogClient?.followEdge({
+        this.statelogClient?.followEdge({
           fromNodeId: currentId,
           toNodeId: nextNode as string,
           isConditionalEdge: false,
@@ -182,7 +182,7 @@ export class PieMachine<T> {
         continue;
       }
       if (isRegularEdge(edge)) {
-        await this.statelogClient?.followEdge({
+        this.statelogClient?.followEdge({
           fromNodeId: currentId,
           toNodeId: edge.to,
           isConditionalEdge: false,
@@ -193,7 +193,7 @@ export class PieMachine<T> {
       } else {
         if (edge.condition) {
           const nextId = await edge.condition(data);
-          await this.statelogClient?.followEdge({
+          this.statelogClient?.followEdge({
             fromNodeId: currentId,
             toNodeId: nextId,
             isConditionalEdge: true,

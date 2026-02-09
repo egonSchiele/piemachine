@@ -79,11 +79,11 @@ export class PieMachine {
             for (const from in this.edges) {
                 jsonEdges[from] = edgeToJSON(this.edges[from]);
             }
-            yield ((_a = this.statelogClient) === null || _a === void 0 ? void 0 : _a.graph({
+            (_a = this.statelogClient) === null || _a === void 0 ? void 0 : _a.graph({
                 nodes: Object.keys(this.nodes),
                 edges: jsonEdges,
                 startNode: startId,
-            }));
+            });
             let currentId = startId;
             let data = input;
             while (currentId) {
@@ -98,15 +98,15 @@ export class PieMachine {
                     const startTime = performance.now();
                     data = yield this.config.hooks.beforeNode(currentId, data);
                     const endTime = performance.now();
-                    yield ((_c = this.statelogClient) === null || _c === void 0 ? void 0 : _c.beforeHook({
+                    (_c = this.statelogClient) === null || _c === void 0 ? void 0 : _c.beforeHook({
                         nodeId: currentId,
                         startData,
                         endData: data,
                         timeTaken: endTime - startTime,
-                    }));
+                    });
                 }
                 this.debug(`Executing node: ${color.green(currentId)}`, data);
-                yield ((_d = this.statelogClient) === null || _d === void 0 ? void 0 : _d.enterNode({ nodeId: currentId, data }));
+                (_d = this.statelogClient) === null || _d === void 0 ? void 0 : _d.enterNode({ nodeId: currentId, data });
                 const startTime = performance.now();
                 const result = yield this.runAndValidate(nodeFunc, currentId, data);
                 const endTime = performance.now();
@@ -118,11 +118,11 @@ export class PieMachine {
                 else {
                     data = result;
                 }
-                yield ((_e = this.statelogClient) === null || _e === void 0 ? void 0 : _e.exitNode({
+                (_e = this.statelogClient) === null || _e === void 0 ? void 0 : _e.exitNode({
                     nodeId: currentId,
                     data,
                     timeTaken: endTime - startTime,
-                }));
+                });
                 this.debug(`Completed node: ${color.green(currentId)}`, data);
                 if ((_f = this.config.hooks) === null || _f === void 0 ? void 0 : _f.afterNode) {
                     this.debug(`After hook for node: ${color.green(currentId)}`, data);
@@ -130,12 +130,12 @@ export class PieMachine {
                     const startTime = performance.now();
                     data = yield this.config.hooks.afterNode(currentId, data);
                     const endTime = performance.now();
-                    yield ((_g = this.statelogClient) === null || _g === void 0 ? void 0 : _g.afterHook({
+                    (_g = this.statelogClient) === null || _g === void 0 ? void 0 : _g.afterHook({
                         nodeId: currentId,
                         startData,
                         endData: data,
                         timeTaken: endTime - startTime,
-                    }));
+                    });
                 }
                 const edge = this.edges[currentId];
                 if (edge === undefined) {
@@ -147,35 +147,35 @@ export class PieMachine {
                     if (!isValidTarget) {
                         throw new PieMachineError(`${currentId} tried to go to ${nextNode}, but did not specify a conditional edge to it. Use graph.conditionalEdge("${currentId}", ["${nextNode}"]) to define the edge.`);
                     }
-                    yield ((_h = this.statelogClient) === null || _h === void 0 ? void 0 : _h.followEdge({
+                    (_h = this.statelogClient) === null || _h === void 0 ? void 0 : _h.followEdge({
                         fromNodeId: currentId,
                         toNodeId: nextNode,
                         isConditionalEdge: false,
                         data,
-                    }));
+                    });
                     this.debug(`Following goto edge to: ${color.green(nextNode)}`, data);
                     currentId = nextNode;
                     continue;
                 }
                 if (isRegularEdge(edge)) {
-                    yield ((_j = this.statelogClient) === null || _j === void 0 ? void 0 : _j.followEdge({
+                    (_j = this.statelogClient) === null || _j === void 0 ? void 0 : _j.followEdge({
                         fromNodeId: currentId,
                         toNodeId: edge.to,
                         isConditionalEdge: false,
                         data,
-                    }));
+                    });
                     this.debug(`Following regular edge to: ${color.green(edge.to)}`);
                     currentId = edge.to;
                 }
                 else {
                     if (edge.condition) {
                         const nextId = yield edge.condition(data);
-                        yield ((_k = this.statelogClient) === null || _k === void 0 ? void 0 : _k.followEdge({
+                        (_k = this.statelogClient) === null || _k === void 0 ? void 0 : _k.followEdge({
                             fromNodeId: currentId,
                             toNodeId: nextId,
                             isConditionalEdge: true,
                             data,
-                        }));
+                        });
                         this.debug(`Following conditional edge to: ${color.green(nextId)}`, data);
                         currentId = nextId;
                     }
