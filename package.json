@@ -1,6 +1,6 @@
 {
   "name": "piemachine",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A general-purpose library for defining and running state machines. Easy as pie.",
   "homepage": "https://github.com/egonSchiele/piemachine",
   "scripts": {
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "nanoid": "^5.1.6",
-    "statelog-client": "^0.0.35",
+    "statelog-client": "^0.0.38",
     "termcolors": "github:egonSchiele/termcolors"
   }
 }
